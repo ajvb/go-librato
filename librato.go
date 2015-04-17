@@ -9,26 +9,35 @@ type Metrics interface {
 	Close()
 	GetCounter(name string) chan int64
 	GetCustomCounter(name string) chan map[string]int64
-	GetCustomGauge(name string) chan map[string]float64
+	GetCustomGauge(name string) chan map[string]interface{}
 	GetGauge(name string) chan float64
 	NewCounter(name string) chan int64
 	NewCustomCounter(name string) chan map[string]int64
-	NewCustomGauge(name string) chan map[string]float64
+	NewCustomGauge(name string) chan map[string]interface{}
 	NewGauge(name string) chan float64
 	Wait()
 }
 
 func handle(i interface{}, bodyMetric tmetric) bool {
 	var obj map[string]int64
+	var objf map[string]interface{}
 	var ok bool
+
 	switch ch := i.(type) {
-	case chan int64:
-		bodyMetric["value"], ok = <-ch
-	case chan map[string]int64:
-		obj, ok = <-ch
-		for k, v := range obj {
-			bodyMetric[k] = v
-		}
+		case chan float64:
+			bodyMetric["value"], ok = <-ch
+		case chan int64:
+			bodyMetric["value"], ok = <-ch
+		case chan map[string]interface{}:
+			objf, ok = <-ch
+			for k, v := range objf {
+				bodyMetric[k] = v
+			}
+		case chan map[string]int64:
+			obj, ok = <-ch
+			for k, v := range obj {
+				bodyMetric[k] = v
+			}
 	}
 	return ok
 }

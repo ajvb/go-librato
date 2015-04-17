@@ -20,7 +20,7 @@ type CollatedMetrics struct {
 	counters                       map[string]chan int64
 	gauges                         map[string]chan float64
 	customCounters                 map[string]chan map[string]int64
-	customGauges                   map[string]chan map[string]float64
+	customGauges                   map[string]chan map[string]interface{}
 	httpClient                     *http.Client
 }
 
@@ -42,7 +42,7 @@ func NewCollatedMetrics(user, token, source string,
 		make(map[string]chan int64),
 		make(map[string]chan float64),
 		make(map[string]chan map[string]int64),
-		make(map[string]chan map[string]float64),
+		make(map[string]chan map[string]interface{}),
 		&http.Client{Transport: http.DefaultTransport},
 	}
 
@@ -150,7 +150,7 @@ func (m *CollatedMetrics) GetCustomCounter(name string) chan map[string]int64 {
 }
 
 // Get (possibly by creating) a custom gauge channel by the given name.
-func (m *CollatedMetrics) GetCustomGauge(name string) chan map[string]float64 {
+func (m *CollatedMetrics) GetCustomGauge(name string) chan map[string]interface{} {
 	ch, ok := m.customGauges[name]
 	if ok {
 		return ch
@@ -184,8 +184,8 @@ func (m *CollatedMetrics) NewCustomCounter(name string) chan map[string]int64 {
 }
 
 // Create a custom gauge channel by the given name.
-func (m *CollatedMetrics) NewCustomGauge(name string) chan map[string]float64 {
-	ch := make(chan map[string]float64)
+func (m *CollatedMetrics) NewCustomGauge(name string) chan map[string]interface{} {
+	ch := make(chan map[string]interface{})
 	m.customGauges[name] = ch
 	go m.newMetric(name, ch, m.collateGauges)
 	return ch
